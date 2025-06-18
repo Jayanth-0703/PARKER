@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parker AI Assistant</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <button id="themeToggle" class="theme-toggle" title="Toggle dark mode">
+      <span class="material-icons">dark_mode</span>
+    </button>
+
+    <button id="settingsToggle" class="settings-toggle" title="Voice settings">
+      <span class="material-icons">settings</span>
+    </button>
+
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <h3>Voice Settings</h3>
+        <button class="close-settings" id="closeSettings">×</button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <label for="voiceSpeed">Speech Rate</label>
+          <input
+            type="range"
+            id="voiceSpeed"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value="1"
+          />
+        </div>
+        <div class="setting-item">
+          <label for="voicePitch">Voice Pitch</label>
+          <input
+            type="range"
+            id="voicePitch"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value="1"
+          />
+        </div>
+        <div class="setting-item">
+          <label>Voice Selection</label>
+          <select id="voiceSelect"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      {% if error %}
+      <div class="error-message">{{ error }}</div>
+      {% endif %}
+      <header>
+        <h1>Parker AI Assistant</h1>
+        <p class="subtitle">Your personal AI companion</p>
+      </header>
+
+      <main>
+        <div class="chat-container" id="chatContainer">
+          <div class="welcome-message assistant-message">
+            <p>Hi! I am Parker, your AI assistant. How can I help you today?</p>
+          </div>
+        </div>
+
+        <div class="input-container">
+          <input
+            type="text"
+            id="userInput"
+            placeholder="Type a message or click mic to speak..."
+          />
+          <button id="micButton" class="mic-button">
+            <span class="material-icons">mic</span>
+          </button>
+          <button id="sendButton" class="send-button">
+            <span class="material-icons">send</span>
+          </button>
+        </div>
+
+        <div class="voice-wave" id="voiceWave">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+
+        <div class="features">
+          <div class="feature-item" data-command="search">
+            <span class="material-icons">search</span>
+            <p>Web Search</p>
+          </div>
+          <div class="feature-item" data-command="music">
+            <span class="material-icons">music_note</span>
+            <p>Play Music</p>
+          </div>
+          <div class="feature-item" data-command="weather">
+            <span class="material-icons">cloud</span>
+            <p>Weather</p>
+          </div>
+          <div class="feature-item" data-command="chat">
+            <span class="material-icons">chat</span>
+            <p>AI Chat</p>
+          </div>
+        </div>
+
+        <div class="command-suggestions" id="commandSuggestions"></div>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </body>
+</html>
