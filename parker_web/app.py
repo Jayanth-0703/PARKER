@@ -1,12 +1,20 @@
-from flask import Flask, render_template, request, jsonify, session
-import sys
-import os
 import datetime
+import os
+import sys
+
 import pyttsx3
+from flask import Flask, jsonify, render_template, request, session
 
 # Add parent directory to Python path to import Parker functions
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from final import get_ai_response, play_music, get_weather, search_web, open_website, get_random_content
+from final import (
+    get_ai_response,
+    get_random_content,
+    get_weather,
+    open_website,
+    play_music,
+    search_web,
+)
 
 app = Flask(__name__)
 app.secret_key = 'parker-ai-secret-key'  # Required for session management
@@ -55,11 +63,7 @@ def process_command():
     response = {'status': 'success', 'response': None, 'action': None}
 
     try:
-        if 'creator' in command or 'who made you' in command or 'who created you' in command:
-            response['response'] = "I'm Parker, created by Jayanth. I'm here to help you with various tasks and answer your questions!"
-            speak_text(response['response'])
-
-        elif 'time' in command:
+        if "time" in command:
             current_time = datetime.datetime.now().strftime("%I:%M %p")
             response['response'] = f"The time is {current_time}"
             speak_text(response['response'])
@@ -67,6 +71,10 @@ def process_command():
         elif 'date' in command:
             today = datetime.date.today().strftime("%B %d, %Y")
             response['response'] = f"Today's date is {today}"
+            speak_text(response['response'])
+
+        elif 'creator' in command or 'who made you' in command or 'who created you' in command:
+            response['response'] = "I'm Parker, created by Jayanth. I'm here to help you with various tasks and answer your questions!"
             speak_text(response['response'])
 
         elif any(word in command for word in ['what is', 'who is', 'tell me about', 'explain', 'why', 'when']):

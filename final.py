@@ -4,14 +4,17 @@ import os
 import random
 import urllib.parse
 import webbrowser
-from groq import Groq
+from typing import Any, Dict, List, Optional
 
 import pyjokes
 import pyttsx3
 import requests
 import speech_recognition as sr
+from groq import Groq
+from groq.types.chat import ChatCompletionMessageParam
 
 # ------------------- Configurations -------------------
+MAX_HISTORY = 5  # Number of messages to remember
 
 MOTIVATIONAL_QUOTES = [
     "The only way to do great work is to love what you do. - Steve Jobs",
@@ -21,45 +24,15 @@ MOTIVATIONAL_QUOTES = [
     "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt"
 ]
 
-# Initialize Groq
-GROQ_API_KEY = "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"
-groq_client = Groq(api_key=GROQ_API_KEY)
-
-# Weather API
+# Initialize API Keys
+GROQ_API_KEY = "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"
 WEATHER_API_KEY = "1cb5f89b2ce24ff28cb7b8be0154114d"
 
-# Common websites
-COMMON_WEBSITES = {
-    'facebook': 'facebook.com',
-    'youtube': 'youtube.com',
-    'google': 'google.com',
-    'twitter': 'twitter.com',
-    'instagram': 'instagram.com',
-    'linkedin': 'linkedin.com',
-    'reddit': 'reddit.com',
-    'amazon': 'amazon.com',
-    'netflix': 'netflix.com',
-    'github': 'github.com',
-    'gmail': 'gmail.google.com',
-    'outlook': 'outlook.live.com',
-    'wikipedia': 'wikipedia.org',
-    'pinterest': 'pinterest.com',
-    'spotify': 'spotify.com'
-}
+groq_client = Groq(api_key=GROQ_API_KEY)
 
-# Add this near other configurations
-MAX_HISTORY = 5  # Number of messages to remember
-
-# Add these to your COMMON_WEBSITES dictionary
-COMMON_WEBSITES.update({
-    'spotify': 'spotify.com',
-    'youtube music': 'music.youtube.com',
-    'soundcloud': 'soundcloud.com'
-})
-
-# ------------------- Helper Functions -------------------
-
-def speak(text):
+# ------------------- Voice Functions -------------------
+def speak(text: str) -> None:
+    """Convert text to speech"""
     try:
         engine = pyttsx3.init()
         voices = engine.getProperty('voices')
@@ -70,66 +43,66 @@ def speak(text):
     except Exception as e:
         print(f"Speech error: {str(e)}")
 
-def listen():
+def listen() -> str:
+    """Listen for voice input"""
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         print("🎤 Listening...")
         recognizer.adjust_for_ambient_noise(source)
         audio = recognizer.listen(source)
-
         try:
             print("🧠 Recognizing...")
             command = recognizer.recognize_google(audio)
             print("You said:", command)
             return command.lower()
         except sr.UnknownValueError:
-            speak("Sorry, I didn't understand that.")
+            print("Sorry, I didn't understand that.")
             return ""
         except sr.RequestError:
-            speak("Sorry, the speech service is down.")
+            print("Sorry, there was an error with the speech service.")
             return ""
 
-def search_web(query):
+# ------------------- AI Functions -------------------
+def get_ai_response(
+    prompt: str, conversation_history: Optional[List[Dict[str, str]]] = None
+) -> str:
+    """Get AI response using Groq API with conversation history"""
+    if conversation_history is None:
+        conversation_history = []
+
     try:
-        encoded_query = urllib.parse.quote(query)
-        url = f"https://www.google.com/search?q={encoded_query}"
-        webbrowser.open(url)
-        return True
+        messages: List[ChatCompletionMessageParam] = [
+            {
+                "role": "system",
+                "content": "You are Parker, an AI assistant created by Jayanth. You're helpful, knowledgeable, and maintain context from previous messages. Keep responses concise and natural.",
+            }
+        ]
+
+        # Add conversation history
+        for message in conversation_history:
+            if isinstance(message, dict) and "role" in message and "content" in message:
+                messages.append(message)
+
+        # Add current prompt
+        messages.append({"role": "user", "content": prompt})
+
+        chat_completion = groq_client.chat.completions.create(
+            messages=messages,
+            model="llama-3.3-70b-versatile",
+            stream=False,
+            temperature=0.7,
+            max_tokens=500,
+        )
+
+        return chat_completion.choices[0].message.content
     except Exception as e:
-        print(f"Error searching web: {str(e)}")
-        return False
+        print(f"Error getting AI response: {str(e)}")
+        return "Sorry, I'm having trouble accessing my knowledge right now."
 
-def open_website(command):
-    try:
-        cleaned = command.lower()
-        for word in ['open', 'website', 'go to', 'goto', 'visit', 'browse', 'dot com']:
-            cleaned = cleaned.replace(word, '')
-        cleaned = cleaned.strip().replace(' ', '')
 
-        # If it's a common website name
-        for name, url in COMMON_WEBSITES.items():
-            if name in cleaned:
-                cleaned = url
-                break
-        else:
-            # Add .com if not already present
-            if not any(ext in cleaned for ext in ['.com', '.org', '.net', '.edu', '.gov']):
-                cleaned = f"{cleaned}.com"
-
-        # Build final URL
-        if not cleaned.startswith(('http://', 'https://')):
-            cleaned = f"https://www.{cleaned}"
-
-        print(f"Opening URL: {cleaned}")
-        webbrowser.open(cleaned)
-        speak(f"Opening {cleaned.replace('https://www.', '').replace('https://', '')}")
-        return True
-    except Exception as e:
-        print(f"Error opening website: {str(e)}")
-        speak("Sorry, I couldn't open that website.")
-        return False
-
+# ------------------- Utility Functions -------------------
 def get_weather(city):
+    """Get weather information for a city"""
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
     try:
         response = requests.get(url)
@@ -145,7 +118,9 @@ def get_weather(city):
         print("Weather error:", str(e))
         return "Sorry, there was an error getting the weather information."
 
+
 def get_random_content(category):
+    """Get random content based on category"""
     try:
         if category in ["motivation", "quote"]:
             try:
@@ -168,56 +143,15 @@ def get_random_content(category):
         print("Content error:", str(e))
         return f"Sorry, I had trouble getting {category}."
 
-def get_ai_response(prompt, conversation_history=[]):
-    """Get AI response using Groq API with conversation history"""
-    try:
-        # Convert conversation history to proper format
-        formatted_messages = [
-            {
-                "role": "system",
-                "content": "You are Parker, a helpful AI assistant. Keep responses concise and natural."
-            }
-        ]
-        
-        # Add conversation history with proper formatting
-        for message in conversation_history:
-            if isinstance(message, dict) and 'role' in message and 'content' in message:
-                formatted_messages.append({
-                    "role": message["role"],
-                    "content": message["content"]
-                })
-        
-        # Add current prompt
-        formatted_messages.append({
-            "role": "user",
-            "content": prompt
-        })
-        
-        # Make API call with properly formatted messages
-        chat_completion = groq_client.chat.completions.create(
-            messages=formatted_messages,
-            model="llama-3.3-70b-versatile",
-            stream=False,
-            temperature=0.7,
-            max_tokens=500
-        )
-        
-        return chat_completion.choices[0].message.content
-    except Exception as e:
-        print(f"Error getting AI response: {str(e)}")
-        return "Sorry, I'm having trouble accessing my knowledge right now."
 
-# Add this new function after other helper functions
 def play_music(command):
     """Handle music playback requests"""
     try:
-        # Remove common words from command
         query = command.lower()
-        for word in ['play', 'song', 'music', 'on', 'in']:
-            query = query.replace(word, '')
+        for word in ["play", "song", "music", "on", "in"]:
+            query = query.replace(word, "")
         query = query.strip()
 
-        # Check for platform-specific requests
         if 'spotify' in command.lower():
             platform = 'spotify'
             url = f"https://open.spotify.com/search/{urllib.parse.quote(query)}"
@@ -225,19 +159,58 @@ def play_music(command):
             platform = 'soundcloud'
             url = f"https://soundcloud.com/search?q={urllib.parse.quote(query)}"
         else:
-            # Default to YouTube Music
             platform = 'youtube music'
             url = f"https://music.youtube.com/search?q={urllib.parse.quote(query)}"
 
         webbrowser.open(url)
-        if query:
-            speak(f"Playing {query} on {platform}")
-        else:
-            speak(f"Opening {platform}")
         return True
     except Exception as e:
         print(f"Error playing music: {str(e)}")
-        speak("Sorry, I couldn't play that music")
+        return False
+
+
+def search_web(query):
+    """Search the web using Google"""
+    try:
+        encoded_query = urllib.parse.quote(query)
+        url = f"https://www.google.com/search?q={encoded_query}"
+        webbrowser.open(url)
+        return True
+    except Exception as e:
+        print(f"Error searching web: {str(e)}")
+        return False
+
+
+def open_website(command):
+    """Open any website"""
+    try:
+        site = command.lower().strip()
+        words_to_remove = [
+            "website",
+            "open",
+            "goto",
+            "go to",
+            "visit",
+            "browse",
+            "www.",
+            "http://",
+            "https://",
+        ]
+        for word in words_to_remove:
+            site = site.replace(word, "").strip()
+
+        # Add domain extension if missing
+        if not any(ext in site for ext in [".com", ".org", ".net", ".edu", ".gov"]):
+            site = f"{site}.com"
+
+        # Ensure proper URL format
+        if not site.startswith(("http://", "https://")):
+            site = f"https://{'www.' if not site.startswith('www.') else ''}{site}"
+
+        webbrowser.open(site)
+        return True
+    except Exception as e:
+        print(f"Error opening website: {str(e)}")
         return False
 
 # ------------------- Main Function -------------------

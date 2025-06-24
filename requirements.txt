@@ -1,0 +1,10 @@
+Flask
+Groq
+pyttsx3
+speech_recognition
+requests
+python-dotenv
+pyjokes
+googletrans==3.1.0a0
+comtypes
+pywin32

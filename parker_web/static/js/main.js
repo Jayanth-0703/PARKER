@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (text) {
       addMessage(text, true);
       userInput.value = "";
-      userInput.disabled = true; // Disable input while processing
+      userInput.disabled = true;
 
       try {
         const response = await fetch("/process_command", {
@@ -65,7 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const data = await response.json();
 
-        // Add response to chat
         if (data.response) {
           addMessage(data.response);
         }
