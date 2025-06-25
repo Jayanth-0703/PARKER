@@ -25,8 +25,8 @@ MOTIVATIONAL_QUOTES = [
 ]
 
 # Initialize API Keys
-GROQ_API_KEY = "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"
-WEATHER_API_KEY = "1cb5f89b2ce24ff28cb7b8be0154114d"
+GROQ_API_KEY = "Your API Key"
+WEATHER_API_KEY = "Your API Key"
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
