@@ -170,5 +170,10 @@ def clear_history():
     session['conversation_history'] = []
     return jsonify({'status': 'success'})
 
+@app.route('/clear_session', methods=['POST'])
+def clear_session():
+    session.pop('chat_history', None)
+    return jsonify({'status': 'session cleared'})
+
 if __name__ == '__main__':
     app.run(debug=True)

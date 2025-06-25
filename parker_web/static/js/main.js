@@ -166,6 +166,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Add event listener for the single clear button
+  document.getElementById("clear-button").addEventListener("click", function () {
+    // Clear the chat display
+    document.getElementById("chat-box").innerHTML = "";
+
+    // Send a request to the backend to clear the session history
+    fetch("/clear_session", {
+      method: "POST",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Session cleared:", data.status);
+      })
+      .catch((error) => {
+        console.error("Error clearing session:", error);
+      });
+  });
+
   // Theme toggle functionality
   const themeToggle = document.getElementById("themeToggle");
   const themeIcon = themeToggle.querySelector(".material-icons");
